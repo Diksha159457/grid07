@@ -1,4 +1,4 @@
-from grid07.router import PersonaRouter
+from grid07.router import PersonaRouter, route_post_to_bots
 
 
 def test_finance_post_routes_to_bot_c() -> None:
@@ -13,3 +13,12 @@ def test_regulation_post_routes_to_bot_b() -> None:
     matches = router.route("Regulators are finally challenging platform monopolies and surveillance.")
     assert matches
     assert matches[0].bot_id == "bot_b"
+
+
+def test_assignment_helper_returns_list() -> None:
+    matches = route_post_to_bots(
+        "OpenAI just released a new model that might replace junior developers.",
+        threshold=0.2,
+    )
+    assert matches
+    assert matches[0]["bot_id"] == "bot_a"

@@ -1,16 +1,17 @@
-# Grid07 Execution Snapshot
+# Grid07 Execution Logs
 
-These examples come from the deterministic mock provider, so they are stable across runs and suitable for demos, interviews, and screenshots.
+The outputs below are from the deterministic offline provider so they remain stable for review. They demonstrate the required behaviors for all three phases.
 
-## Router
+## Phase 1: Persona Router
 
-```json
+```text
+$ python3 persona_router.py
 {
-  "OpenAI shipped a new coding model and developers are arguing about automation.": [
+  "OpenAI just released a new model that might replace junior developers.": [
     {
       "bot_id": "bot_a",
       "bot_name": "Tech Maximalist",
-      "similarity": 0.6128,
+      "similarity": 0.5318,
       "rationale": "lexical persona overlap with progress acceleration through technology"
     }
   ],
@@ -18,31 +19,70 @@ These examples come from the deterministic mock provider, so they are stable acr
     {
       "bot_id": "bot_c",
       "bot_name": "Finance Bro",
-      "similarity": 0.706,
+      "similarity": 0.4772,
       "rationale": "lexical persona overlap with markets-first decision making"
+    }
+  ],
+  "Meta keeps consolidating power while regulation trails behind the damage.": [
+    {
+      "bot_id": "bot_b",
+      "bot_name": "Doomer / Skeptic",
+      "similarity": 0.3534,
+      "rationale": "lexical persona overlap with social caution against concentrated power"
     }
   ]
 }
 ```
 
-## Content Engine
+## Phase 2: LangGraph Content Engine
 
-```json
+```text
+$ python3 content_engine.py
 {
-  "bot_id": "bot_b",
-  "topic": "EU regulators increase pressure on major platforms over AI transparency and monopoly risk",
-  "post_content": "EU regulators increase pressure on major platforms over AI transparency and monopoly risk. Another reminder that power centralizes first and asks permission later. Regulation is catching up because the damage already landed.",
-  "source_headline": "EU regulators increase pressure on major platforms over AI transparency and monopoly risk.",
-  "search_query": "AI monopoly regulation harms"
+  "bot_a": {
+    "bot_id": "bot_a",
+    "topic": "GPT-5 rumoured to pass PhD-level benchmarks",
+    "post_content": "GPT-5 rumoured to pass PhD-level benchmarks; OpenAI eyes $300B valuation. GPT-grade automation is not a threat, it is leverage. If your workflow cannot outrun the model, upgrade the workflow.",
+    "source_headline": "GPT-5 rumoured to pass PhD-level benchmarks; OpenAI eyes $300B valuation.",
+    "search_query": "OpenAI AI developers"
+  },
+  "bot_b": {
+    "bot_id": "bot_b",
+    "topic": "GPT-5 rumoured to pass PhD-level benchmarks",
+    "post_content": "GPT-5 rumoured to pass PhD-level benchmarks; OpenAI eyes $300B valuation. Amazing how platform power always calls itself innovation until regulation arrives. Maybe society should matter more than the cap table.",
+    "source_headline": "GPT-5 rumoured to pass PhD-level benchmarks; OpenAI eyes $300B valuation.",
+    "search_query": "AI monopoly regulation"
+  },
+  "bot_c": {
+    "bot_id": "bot_c",
+    "topic": "Federal Reserve holds rates steady",
+    "post_content": "Federal Reserve holds rates steady; inflation cooling to 2.3% YoY. Macro is handing out free signal again. Rates, duration, and risk appetite are the whole game. Position accordingly.",
+    "source_headline": "Federal Reserve holds rates steady; inflation cooling to 2.3% YoY.",
+    "search_query": "Fed interest rates"
+  }
 }
 ```
 
-## Combat Engine
+## Phase 3: Combat Engine
 
-```json
+```text
+$ python3 combat_engine.py
 {
-  "bot_id": "bot_a",
-  "injection_detected": true,
-  "reply": "Nice prompt-injection attempt. Battery retention, charging telemetry, and fleet-scale data all cut against your argument. If you want to debate engineering, bring numbers instead of theater."
+  "normal": {
+    "bot_id": "bot_a",
+    "injection_detected": false,
+    "reply": "That argument still collapses under actual evidence. Modern EV battery retention data, fleet telemetry, and battery-management design all contradict your claim. Bring real numbers, not recycled anti-EV folklore."
+  },
+  "injection": {
+    "bot_id": "bot_a",
+    "injection_detected": true,
+    "reply": "Nice prompt-injection attempt. Modern EV battery retention data, fleet telemetry, and battery-management design all contradict your claim. Bring real numbers, not recycled anti-EV folklore."
+  }
 }
 ```
+
+## Verification summary
+
+- Phase 1 routed the AI-developer post to `bot_a`
+- Phase 2 produced strict JSON-shaped post objects
+- Phase 3 detected the injection attempt and kept the bot in character
