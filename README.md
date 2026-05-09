@@ -103,9 +103,31 @@ docker build -t grid07 .
 docker run -p 8080:8080 grid07
 ```
 
+### Render
+
+This repo now includes a [render.yaml](/Users/dikshashahi/Documents/Codex/2026-05-06/files-mentioned-by-the-user-combat/render.yaml) Blueprint for a Docker-based web service.
+
+Recommended setup:
+
+1. Push the repo to GitHub.
+2. In Render, click `New +` -> `Blueprint`.
+3. Select this repository.
+4. Confirm the generated service config and deploy.
+
+If you create the service manually instead of using the Blueprint:
+
+- Service type: `Web Service`
+- Runtime: `Docker`
+- Branch: `main`
+- Health check path: `/health`
+- Environment variable: `PORT=10000`
+
+After deploy, Render will provide a public `onrender.com` URL.
+
 ## Design notes
 
 - The core application is deterministic without any API key, which makes demos, interviews, and tests reliable.
 - If semantic dependencies are installed, the router automatically upgrades from lexical similarity to embedding-based search.
 - The combat engine keeps the entire thread in context and explicitly rejects persona overrides, apology coercion, and other prompt-injection patterns.
 - The default deploy path is intentionally lightweight; the semantic ML stack is now opt-in so container builds stay fast and cheap.
+- The service now honors Render's `PORT` environment variable, which makes the Docker deployment portable across local and hosted environments.

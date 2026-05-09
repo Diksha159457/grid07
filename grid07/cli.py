@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
 from grid07.api import serve
 from grid07.combat_engine import CombatEngine, demo as combat_demo
@@ -25,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     serve_parser = subparsers.add_parser("serve", help="Run the local HTTP API")
     serve_parser.add_argument("--host", default="127.0.0.1")
-    serve_parser.add_argument("--port", type=int, default=8080)
+    serve_parser.add_argument("--port", type=int, default=None)
 
     subparsers.add_parser("demo", help="Run all demos")
     return parser
@@ -51,7 +52,8 @@ def main() -> None:
         return
 
     if args.command == "serve":
-        serve(args.host, args.port)
+        port = args.port if args.port is not None else int(os.getenv("PORT", "8080"))
+        serve(args.host, port)
         return
 
     if args.command == "demo":

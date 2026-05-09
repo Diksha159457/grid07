@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: grid07-cognitive-combat
+    runtime: docker
+    plan: free
+    autoDeployTrigger: commit
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 10000
