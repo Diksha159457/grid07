@@ -1,0 +1,5 @@
+# Optional enhancements. The core project runs on the Python standard library.
+sentence-transformers>=2.7.0
+faiss-cpu>=1.8.0
+python-dotenv>=1.0.0
+pytest>=8.0.0

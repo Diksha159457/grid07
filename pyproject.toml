@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "grid07-cognitive-combat"
+version = "1.0.0"
+description = "Autonomous persona routing, content generation, and adversarial reply engine."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Diksha Shahi" }
+]
+dependencies = []
+
+[project.scripts]
+grid07 = "grid07.cli:main"
+
+[tool.setuptools]
+packages = ["grid07"]

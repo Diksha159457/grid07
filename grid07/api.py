@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+import json
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from grid07.combat_engine import CombatEngine
+from grid07.content_engine import ContentEngine
+from grid07.router import PersonaRouter
+
+
+class Grid07RequestHandler(BaseHTTPRequestHandler):
+    router = PersonaRouter()
+    content_engine = ContentEngine()
+    combat_engine = CombatEngine()
+
+    def _read_json(self) -> dict:
+        content_length = int(self.headers.get("Content-Length", "0"))
+        if not content_length:
+            return {}
+        body = self.rfile.read(content_length).decode("utf-8")
+        return json.loads(body)
+
+    def _send_json(self, payload: dict, status: int = HTTPStatus.OK) -> None:
+        encoded = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path == "/health":
+            self._send_json({"status": "ok"})
+            return
+        self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+
+    def do_POST(self) -> None:  # noqa: N802
+        try:
+            payload = self._read_json()
+            if self.path == "/route":
+                post = payload.get("post", "")
+                matches = [match.__dict__ for match in self.router.route(post)]
+                self._send_json({"matches": matches})
+                return
+            if self.path == "/generate-post":
+                bot_id = payload.get("bot_id", "bot_a")
+                self._send_json(self.content_engine.generate_post(bot_id))
+                return
+            if self.path == "/reply":
+                bot_id = payload.get("bot_id", "bot_a")
+                message = payload.get("message", "")
+                self._send_json(self.combat_engine.generate_reply(bot_id, message))
+                return
+            self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
+        except Exception as exc:  # pragma: no cover
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+
+
+def serve(host: str = "127.0.0.1", port: int = 8080) -> None:
+    server = ThreadingHTTPServer((host, port), Grid07RequestHandler)
+    print(f"Grid07 API running on http://{host}:{port}")
+    server.serve_forever()
