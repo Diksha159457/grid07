@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "grid07.cli", "serve", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "-m", "grid07.cli", "serve", "--host", "0.0.0.0"]
