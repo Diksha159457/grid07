@@ -30,7 +30,22 @@ class Grid07RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/health":
+        if self.path in {"/", ""}:
+            self._send_json(
+                {
+                    "service": "grid07-cognitive-combat",
+                    "status": "ok",
+                    "message": "Grid07 API is live.",
+                    "endpoints": {
+                        "health": "/health",
+                        "route": "POST /route",
+                        "generate_post": "POST /generate-post",
+                        "reply": "POST /reply",
+                    },
+                }
+            )
+            return
+        if self.path in {"/health", "/health/"}:
             self._send_json({"status": "ok"})
             return
         self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
