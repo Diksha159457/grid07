@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from grid07.combat_engine import CombatEngine
 from grid07.content_engine import ContentEngine
 from grid07.router import PersonaRouter
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 class Grid07RequestHandler(BaseHTTPRequestHandler):
@@ -29,8 +32,26 @@ class Grid07RequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+    def _send_file(self, filename: str, content_type: str, status: int = HTTPStatus.OK) -> None:
+        file_path = STATIC_DIR / filename
+        content = file_path.read_bytes()
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
     def do_GET(self) -> None:  # noqa: N802
         if self.path in {"/", ""}:
+            self._send_file("index.html", "text/html; charset=utf-8")
+            return
+        if self.path == "/app.css":
+            self._send_file("app.css", "text/css; charset=utf-8")
+            return
+        if self.path == "/app.js":
+            self._send_file("app.js", "application/javascript; charset=utf-8")
+            return
+        if self.path in {"/api", "/api/", "/info", "/info/"}:
             self._send_json(
                 {
                     "service": "grid07-cognitive-combat",
