@@ -7,6 +7,9 @@ Grid07 is a deployable Python project for persona-based post routing, autonomous
 - Persona router with automatic fallback:
   - Uses `sentence-transformers` + FAISS when available
   - Falls back to a deterministic lexical scorer offline
+- Lightweight by default:
+  - Docker and basic local installs avoid the heavy ML stack
+  - Semantic routing can be added only when you actually want it
 - Content engine with a clean three-stage pipeline:
   - topic selection
   - fresh-context lookup
@@ -36,6 +39,8 @@ Grid07 is a deployable Python project for persona-based post routing, autonomous
 ├── execution_logs.md
 ├── Dockerfile
 ├── requirements.txt
+├── requirements-dev.txt
+├── requirements-semantic.txt
 └── pyproject.toml
 ```
 
@@ -46,8 +51,17 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
+pip install -r requirements-dev.txt
 pytest
 python3 -m grid07.cli demo
+```
+
+## Optional semantic router
+
+Install this only if you want embedding-based routing:
+
+```bash
+pip install -r requirements-semantic.txt
 ```
 
 ## CLI usage
@@ -94,3 +108,4 @@ docker run -p 8080:8080 grid07
 - The core application is deterministic without any API key, which makes demos, interviews, and tests reliable.
 - If semantic dependencies are installed, the router automatically upgrades from lexical similarity to embedding-based search.
 - The combat engine keeps the entire thread in context and explicitly rejects persona overrides, apology coercion, and other prompt-injection patterns.
+- The default deploy path is intentionally lightweight; the semantic ML stack is now opt-in so container builds stay fast and cheap.

@@ -1,5 +1,4 @@
-# Optional enhancements. The core project runs on the Python standard library.
-sentence-transformers>=2.7.0
-faiss-cpu>=1.8.0
+# Minimal runtime dependencies for deployment.
+# The app runs in lightweight mode by default and upgrades automatically
+# if optional semantic dependencies are installed separately.
 python-dotenv>=1.0.0
-pytest>=8.0.0
