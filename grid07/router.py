@@ -82,10 +82,7 @@ class PersonaRouter:
 
         post_vector = self._semantic_model.encode([post], normalize_embeddings=True).astype(np.float32)
         scores, indices = self._semantic_index.search(post_vector, k=len(self._semantic_bot_ids))
-        return {
-            self._semantic_bot_ids[idx]: float(score)
-            for score, idx in zip(scores[0], indices[0])
-        }
+        return {self._semantic_bot_ids[idx]: float(score) for score, idx in zip(scores[0], indices[0], strict=True)}
 
     def route(self, post: str) -> list[RouteMatch]:
         if self._semantic_ready:

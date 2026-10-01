@@ -5,13 +5,15 @@ from dataclasses import asdict
 from typing import TypedDict
 
 from grid07.personas import PERSONAS
-from grid07.providers import MockLLMProvider
+from grid07.providers import LLMProvider, get_provider
 
 try:
     from langchain_core.tools import tool
 except ImportError:
+
     def tool(func):  # type: ignore
         return func
+
 
 try:
     from langgraph.graph import END, StateGraph
@@ -54,7 +56,7 @@ class PostState(TypedDict):
 class LocalCompiledGraph:
     """Sequential fallback used only when LangGraph is unavailable locally."""
 
-    def __init__(self, engine: "ContentEngine") -> None:
+    def __init__(self, engine: ContentEngine) -> None:
         self.engine = engine
 
     def invoke(self, state: PostState) -> PostState:
@@ -65,8 +67,8 @@ class LocalCompiledGraph:
 
 
 class ContentEngine:
-    def __init__(self, provider: MockLLMProvider | None = None) -> None:
-        self.provider = provider or MockLLMProvider()
+    def __init__(self, provider: LLMProvider | None = None) -> None:
+        self.provider = provider or get_provider()
         self.graph = self.build_graph()
 
     def decide_search_node(self, state: PostState) -> PostState:
@@ -74,7 +76,11 @@ class ContentEngine:
         return {**state, "search_query": search_query}
 
     def web_search_node(self, state: PostState) -> PostState:
-        search_result = mock_searxng_search(state["search_query"])
+        # With langchain-core installed, @tool returns a StructuredTool (not callable).
+        if hasattr(mock_searxng_search, "invoke"):
+            search_result = mock_searxng_search.invoke({"query": state["search_query"]})
+        else:
+            search_result = mock_searxng_search(state["search_query"])
         return {**state, "search_result": search_result}
 
     def draft_post_node(self, state: PostState) -> PostState:
@@ -97,6 +103,8 @@ class ContentEngine:
         return graph.compile()
 
     def generate_post(self, bot_id: str) -> dict[str, str]:
+        if bot_id not in PERSONAS:
+            raise KeyError(f"Unknown bot_id {bot_id!r}; expected one of {sorted(PERSONAS)}")
         initial_state: PostState = {
             "bot_id": bot_id,
             "persona": PERSONAS[bot_id].description,

@@ -1,2 +1,4 @@
 -r requirements-deploy.txt
 pytest>=8.0.0
+pytest-cov>=5
+ruff>=0.6

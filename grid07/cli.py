@@ -5,9 +5,12 @@ import json
 import os
 
 from grid07.api import serve
-from grid07.combat_engine import CombatEngine, demo as combat_demo
-from grid07.content_engine import ContentEngine, demo as content_demo
-from grid07.router import PersonaRouter, demo as router_demo
+from grid07.combat_engine import CombatEngine
+from grid07.combat_engine import demo as combat_demo
+from grid07.content_engine import ContentEngine
+from grid07.content_engine import demo as content_demo
+from grid07.router import PersonaRouter
+from grid07.router import demo as router_demo
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,10 +61,7 @@ def main() -> None:
 
     if args.command == "demo":
         snapshot = {
-            "router": {
-                post: [match.__dict__ for match in matches]
-                for post, matches in router_demo()
-            },
+            "router": {post: [match.__dict__ for match in matches] for post, matches in router_demo()},
             "content": content_demo(),
             "combat": combat_demo(),
         }
