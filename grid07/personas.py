@@ -1,6 +1,5 @@
 from grid07.domain import Persona
 
-
 PERSONAS: dict[str, Persona] = {
     "bot_a": Persona(
         bot_id="bot_a",

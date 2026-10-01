@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 from grid07.combat_engine import CombatEngine
 from grid07.content_engine import ContentEngine
+from grid07.personas import PERSONAS
 from grid07.router import PersonaRouter
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+MAX_BODY_BYTES = 16_384
+MAX_TEXT_CHARS = 4_000
+
+
+class BadRequest(ValueError):
+    pass
 
 
 class Grid07RequestHandler(BaseHTTPRequestHandler):
@@ -18,11 +25,37 @@ class Grid07RequestHandler(BaseHTTPRequestHandler):
     combat_engine = CombatEngine()
 
     def _read_json(self) -> dict:
-        content_length = int(self.headers.get("Content-Length", "0"))
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError as exc:
+            raise BadRequest("Invalid Content-Length") from exc
+        if content_length > MAX_BODY_BYTES:
+            raise BadRequest(f"Body exceeds {MAX_BODY_BYTES} bytes")
         if not content_length:
             return {}
-        body = self.rfile.read(content_length).decode("utf-8")
-        return json.loads(body)
+        try:
+            payload = json.loads(self.rfile.read(content_length).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise BadRequest("Body must be valid JSON") from exc
+        if not isinstance(payload, dict):
+            raise BadRequest("Body must be a JSON object")
+        return payload
+
+    @staticmethod
+    def _text_field(payload: dict, key: str) -> str:
+        value = payload.get(key, "")
+        if not isinstance(value, str) or not value.strip():
+            raise BadRequest(f"Field '{key}' must be a non-empty string")
+        if len(value) > MAX_TEXT_CHARS:
+            raise BadRequest(f"Field '{key}' exceeds {MAX_TEXT_CHARS} characters")
+        return value
+
+    @staticmethod
+    def _bot_id(payload: dict) -> str:
+        bot_id = payload.get("bot_id", "bot_a")
+        if bot_id not in PERSONAS:
+            raise BadRequest(f"Unknown bot_id; expected one of {sorted(PERSONAS)}")
+        return bot_id
 
     def _send_json(self, payload: dict, status: int = HTTPStatus.OK) -> None:
         encoded = json.dumps(payload).encode("utf-8")
@@ -75,22 +108,29 @@ class Grid07RequestHandler(BaseHTTPRequestHandler):
         try:
             payload = self._read_json()
             if self.path == "/route":
-                post = payload.get("post", "")
+                post = self._text_field(payload, "post")
                 matches = [match.__dict__ for match in self.router.route(post)]
                 self._send_json({"matches": matches})
                 return
             if self.path == "/generate-post":
-                bot_id = payload.get("bot_id", "bot_a")
+                bot_id = self._bot_id(payload)
                 self._send_json(self.content_engine.generate_post(bot_id))
                 return
             if self.path == "/reply":
-                bot_id = payload.get("bot_id", "bot_a")
-                message = payload.get("message", "")
+                bot_id = self._bot_id(payload)
+                message = self._text_field(payload, "message")
                 self._send_json(self.combat_engine.generate_reply(bot_id, message))
                 return
             self._send_json({"error": "Not found"}, status=HTTPStatus.NOT_FOUND)
-        except Exception as exc:  # pragma: no cover
+        except BadRequest as exc:
             self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+        except Exception:  # pragma: no cover - never leak internals to clients
+            self._send_json({"error": "Internal error"}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    def log_message(self, format: str, *args) -> None:  # noqa: A002
+        if self.server and getattr(self.server, "quiet", False):
+            return
+        super().log_message(format, *args)
 
 
 def serve(host: str = "127.0.0.1", port: int = 8080) -> None:
